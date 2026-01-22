@@ -11,24 +11,73 @@ import { PERFUMES } from './constants';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('home');
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [pos, setPos] = useState({ x: -500, y: -500 });
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setIsMobile('ontouchstart' in window);
+
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      setPos({ x: e.clientX, y: e.clientY });
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      if (e.gamma !== null && e.beta !== null) {
+        // Converte a inclinação do celular em uma posição de luz na tela
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        
+        // Mapeia inclinação para posição (aprox. -45 a 45 graus de range útil)
+        const x = (e.gamma / 45) * (winW / 2) + (winW / 2);
+        const y = ((e.beta - 45) / 45) * (winH / 2) + (winH / 2);
+        
+        setPos({ x, y });
+      }
+    };
+
+    if ('ontouchstart' in window) {
+      window.addEventListener('deviceorientation', handleOrientation);
+    } else {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
   }, []);
 
-  // Spotlight effect following the cursor
+  // Spotlight effect following the cursor or tilt
   const spotlightStyles: React.CSSProperties = {
-    background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.4), transparent 40%)`,
+    background: `radial-gradient(800px circle at ${pos.x}px ${pos.y}px, rgba(255,255,255,0.5), transparent 60%)`,
     pointerEvents: 'none',
     position: 'fixed',
     inset: 0,
     zIndex: 10,
+    transition: isMobile ? 'background 0.1s ease-out' : 'none'
+  };
+
+  // Solicitar permissão explicitamente se necessário (iOS)
+  const requestMotionPermission = () => {
+    if (
+      typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof (DeviceOrientationEvent as any).requestPermission === 'function'
+    ) {
+      (DeviceOrientationEvent as any).requestPermission()
+        .then((response: string) => {
+          if (response === 'granted') {
+            console.log('Motion permission granted');
+          }
+        })
+        .catch(console.error);
+    }
+  };
+
+  const handleViewChange = (newView: View) => {
+    requestMotionPermission(); // Tenta ativar sensores na primeira navegação
+    setView(newView);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderContent = () => {
@@ -43,8 +92,8 @@ const App: React.FC = () => {
                 transition={{ duration: 1.5, staggerChildren: 0.1 }}
                 className="flex flex-col gap-2"
               >
-                <span className="text-zinc-400 tracking-[0.4em] text-xs font-medium uppercase">Edition 2024</span>
-                <h1 className="font-serif text-[15vw] leading-none text-zinc-900 tracking-tighter">
+                <span className="text-zinc-400 tracking-[0.6em] text-[10px] font-bold uppercase ml-1">Luminous Collection</span>
+                <h1 className="font-serif text-[18vw] leading-none text-zinc-900 tracking-tighter">
                   FIORÉ.
                 </h1>
               </motion.div>
@@ -52,24 +101,24 @@ const App: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="mt-8 text-lg text-zinc-500 max-w-sm font-light leading-relaxed"
+                className="mt-8 text-xl text-zinc-500 max-w-sm font-light leading-relaxed"
               >
-                Fragrâncias que redefinem a física do luxo. 
-                <span className="block font-medium text-zinc-900">Jardim Eldorado, Palhoça.</span>
+                Refrações de luxo em cada nota. 
+                <span className="block font-medium text-zinc-900 mt-1">Sua jornada olfativa começa aqui.</span>
               </motion.p>
             </header>
 
             <section>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="font-serif text-3xl text-zinc-800">Destaques</h2>
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="font-serif text-3xl text-zinc-800">Curadoria</h2>
                 <button 
-                  onClick={() => setView('catalog')}
-                  className="text-xs uppercase tracking-widest font-semibold border-b border-zinc-200 pb-1"
+                  onClick={() => handleViewChange('catalog')}
+                  className="text-[10px] uppercase tracking-widest font-bold border-b-2 border-zinc-900 pb-1"
                 >
-                  Ver Tudo
+                  Explorar
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {PERFUMES.slice(0, 2).map((p) => (
                   <ProductCard key={p.id} perfume={p} />
                 ))}
@@ -80,8 +129,8 @@ const App: React.FC = () => {
       case 'catalog':
         return (
           <div className="px-6 pt-32 pb-40">
-            <h2 className="font-serif text-5xl mb-12 text-zinc-900">Catálogo Completo</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <h2 className="font-serif text-5xl mb-12 text-zinc-900 tracking-tight">O Laboratório</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {PERFUMES.map((p) => (
                 <ProductCard key={p.id} perfume={p} />
               ))}
@@ -98,7 +147,7 @@ const App: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative min-h-screen bg-luminous-50 selection:bg-zinc-200"
+      className="relative min-h-screen bg-luminous-50 selection:bg-zinc-200 overflow-x-hidden"
     >
       <LiquidAnimation />
       <div style={spotlightStyles} />
@@ -107,21 +156,21 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={view}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             {renderContent()}
           </motion.div>
         </AnimatePresence>
       </main>
 
-      <BottomDock currentView={view} onViewChange={setView} />
+      <BottomDock currentView={view} onViewChange={handleViewChange} />
       
       {/* Dynamic Background Accents */}
-      <div className="fixed top-0 right-0 -z-10 w-96 h-96 bg-luminous-blue/20 blur-[120px] rounded-full" />
-      <div className="fixed bottom-0 left-0 -z-10 w-96 h-96 bg-luminous-amber/20 blur-[120px] rounded-full" />
+      <div className="fixed top-0 right-0 -z-10 w-full h-[50vh] bg-gradient-to-b from-luminous-blue/30 to-transparent pointer-events-none" />
+      <div className="fixed bottom-0 left-0 -z-10 w-full h-[50vh] bg-gradient-to-t from-luminous-amber/20 to-transparent pointer-events-none" />
     </div>
   );
 };

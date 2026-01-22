@@ -41,8 +41,8 @@ export const PERFUMES: Perfume[] = [
     brand: 'Fioré Private',
     family: 'Amber',
     notes: ['Âmbar Cinzento', 'Baunilha Bourbon', 'Patchouli'],
-    description: 'Calor e sofisticação em uma síntese perfeita.',
-    imageUrl: 'https://images.unsplash.com/photo-1588405748353-0c58a393fb6a?auto=format&fit=crop&q=80&w=800',
+    description: 'Calor e sofisticação em uma síntese perfeita de laboratório.',
+    imageUrl: 'https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?auto=format&fit=crop&q=80&w=800',
     price: 'R$ 620,00'
   },
   {

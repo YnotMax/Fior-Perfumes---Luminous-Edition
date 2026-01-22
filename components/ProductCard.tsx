@@ -1,10 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { MessageCircle, Info } from 'lucide-react';
-// WHATSAPP_NUMBER is a value exported from constants.ts
 import { WHATSAPP_NUMBER } from '../constants';
-// Perfume is a type exported from types.ts
 import { Perfume } from '../types';
 
 interface ProductCardProps {
@@ -15,11 +13,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ perfume }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
+  const mouseXSpring = useSpring(x, { stiffness: 150, damping: 20 });
+  const mouseYSpring = useSpring(y, { stiffness: 150, damping: 20 });
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["12deg", "-12deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-12deg", "12deg"]);
+
+  useEffect(() => {
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      // No mobile, usamos gamma (tilt esq/dir) e beta (frente/tras)
+      if (e.gamma !== null && e.beta !== null) {
+        // Mapeia -30/30 graus para o range -0.5/0.5
+        const gammaNormalized = Math.max(-1, Math.min(1, e.gamma / 30)) * 0.5;
+        const betaNormalized = Math.max(-1, Math.min(1, (e.beta - 45) / 30)) * 0.5;
+        
+        x.set(gammaNormalized);
+        y.set(betaNormalized);
+      }
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation);
+    return () => window.removeEventListener('deviceorientation', handleOrientation);
+  }, [x, y]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -27,15 +42,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ perfume }) => {
     const height = rect.height;
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
+    x.set(mouseX / width - 0.5);
+    y.set(mouseY / height - 0.5);
   };
 
   const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
+    // No mobile, o giroscópio continuará atualizando, no desktop volta ao centro
+    if (!('ontouchstart' in window)) {
+      x.set(0);
+      y.set(0);
+    }
   };
 
   const handleConsult = () => {
@@ -51,36 +67,37 @@ export const ProductCard: React.FC<ProductCardProps> = ({ perfume }) => {
       onMouseLeave={handleMouseLeave}
       className="relative w-full group"
     >
-      <div className="glass rounded-[2rem] p-4 flex flex-col gap-4 h-full transition-all duration-500 group-hover:bg-white/50">
+      <div className="glass rounded-[2rem] p-4 flex flex-col gap-4 h-full transition-all duration-500 group-hover:bg-white/60">
         <div 
-          className="relative aspect-[3/4] rounded-2xl overflow-hidden"
-          style={{ transform: "translateZ(20px)" }}
+          className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-sm"
+          style={{ transform: "translateZ(30px)" }}
         >
           <img 
             src={perfume.imageUrl} 
             alt={perfume.name}
-            className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
+            className="w-full h-full object-cover grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700"
           />
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
           <div className="absolute top-3 right-3 glass p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
             <Info className="w-4 h-4 text-zinc-600" />
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 px-1" style={{ transform: "translateZ(30px)" }}>
-          <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium">
+        <div className="flex flex-col gap-1 px-1" style={{ transform: "translateZ(40px)" }}>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-bold">
             {perfume.brand} • {perfume.family}
           </span>
-          <h3 className="font-serif text-xl text-zinc-800">{perfume.name}</h3>
-          <p className="text-sm text-zinc-500 line-clamp-2 leading-relaxed h-10">
+          <h3 className="font-serif text-2xl text-zinc-800 tracking-tight">{perfume.name}</h3>
+          <p className="text-sm text-zinc-500 line-clamp-2 leading-relaxed h-10 mt-1">
             {perfume.description}
           </p>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="font-medium text-zinc-900">{perfume.price}</span>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="font-semibold text-zinc-900 text-lg">{perfume.price}</span>
             <button
               onClick={handleConsult}
-              className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full text-xs font-medium hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-2xl text-xs font-bold hover:bg-zinc-800 transition-all active:scale-95 shadow-lg shadow-zinc-200"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
+              <MessageCircle className="w-4 h-4" />
               Consultar
             </button>
           </div>
