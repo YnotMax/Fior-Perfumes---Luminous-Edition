@@ -23,7 +23,6 @@ export const BottomDock: React.FC<BottomDockProps> = ({ currentView, onViewChang
       }
       setLastScrollY(currentScrollY);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
@@ -44,7 +43,7 @@ export const BottomDock: React.FC<BottomDockProps> = ({ currentView, onViewChang
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-6 left-0 right-0 z-50 px-4 pointer-events-none"
         >
-          <div className="glass rounded-[2rem] p-1.5 flex items-center justify-between shadow-2xl border-white/60 bg-white/60 max-w-[360px] mx-auto pointer-events-auto">
+          <div className="glass rounded-[2rem] p-1.5 flex items-center justify-between shadow-2xl dark:bg-zinc-900/40 max-w-[360px] mx-auto pointer-events-auto transition-colors duration-500">
             {items.map((item) => {
               const isActive = currentView === item.id;
               return (
@@ -56,14 +55,14 @@ export const BottomDock: React.FC<BottomDockProps> = ({ currentView, onViewChang
                   }}
                   className={`relative flex flex-col items-center justify-center gap-1 py-2.5 transition-all duration-500 rounded-2xl ${
                     isActive 
-                      ? 'text-zinc-900 flex-[1.5] min-w-[70px]' 
-                      : 'text-zinc-400 hover:text-zinc-600 flex-1 min-w-[50px]'
+                      ? 'text-zinc-900 dark:text-white flex-[1.5] min-w-[70px]' 
+                      : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 flex-1 min-w-[50px]'
                   }`}
                 >
                   {isActive && (
                     <motion.div 
                       layoutId="dock-bg"
-                      className="absolute inset-0 bg-white shadow-sm rounded-xl"
+                      className="absolute inset-0 bg-zinc-900/10 dark:bg-white/10 shadow-sm rounded-xl"
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}

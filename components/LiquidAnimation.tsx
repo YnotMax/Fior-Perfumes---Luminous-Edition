@@ -1,46 +1,30 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-export const LiquidAnimation: React.FC = () => {
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+interface LiquidAnimationProps {
+  theme?: 'light' | 'dark';
+}
 
-  useEffect(() => {
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      if (e.gamma !== null && e.beta !== null) {
-        // Normaliza movimento para um deslocamento suave de até 20px
-        setOffset({
-          x: (e.gamma / 45) * 20,
-          y: (e.beta / 45) * 20
-        });
-      }
-    };
-
-    window.addEventListener('deviceorientation', handleOrientation);
-    return () => window.removeEventListener('deviceorientation', handleOrientation);
-  }, []);
-
+export const LiquidAnimation: React.FC<LiquidAnimationProps> = ({ theme = 'dark' }) => {
   return (
-    <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      {/* Círculos de gradiente leves em vez de blur pesado na tela toda */}
       <div 
-        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-luminous-blue via-white to-luminous-amber animate-[spin_30s_linear_infinite]" 
-        style={{
-          transform: `translate(${offset.x}px, ${offset.y}px) rotate(0deg)`
-        }}
+        className={`absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full mix-blend-screen filter blur-[80px] opacity-20 animate-pulse transition-colors duration-1000 ${
+          theme === 'dark' ? 'bg-zinc-800' : 'bg-luminous-blue'
+        }`}
       />
       <div 
-        className="absolute inset-0 bg-white/20 backdrop-blur-3xl"
-        style={{
-          borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
-          animation: 'liquid-morph 8s ease-in-out infinite alternate',
-          transform: `translate(${-offset.x * 1.5}px, ${-offset.y * 1.5}px)`
-        }}
+        className={`absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full mix-blend-screen filter blur-[100px] opacity-10 animate-bounce transition-colors duration-1000`}
+        style={{ animationDuration: '15s', backgroundColor: theme === 'dark' ? '#27272a' : '#f59e0b' }}
       />
-      <style>{`
-        @keyframes liquid-morph {
-          0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-          100% { border-radius: 60% 40% 30% 70% / 50% 30% 70% 40%; }
-        }
-      `}</style>
+      <div 
+        className={`absolute -bottom-[10%] left-[20%] w-[40%] h-[40%] rounded-full mix-blend-screen filter blur-[120px] opacity-15 animate-pulse transition-colors duration-1000`}
+        style={{ animationDuration: '20s', backgroundColor: theme === 'dark' ? '#18181b' : '#ec4899' }}
+      />
+      
+      {/* Overlay sutil para textura */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === 'dark' ? 'bg-black/20' : 'bg-white/10'}`} />
     </div>
   );
 };
